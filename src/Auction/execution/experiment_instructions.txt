@@ -1,0 +1,59 @@
+Details of the Game
+You are a seller of a fictitious product. To make money, you must sell that product in an auction. In each auction, you will be selling your product to a different number of computerized buyers. To sell the product, you enter the minimum value that you are willing to sell this product for; this amount is your Reservation Price.
+
+Before entering your Reservation Price, you will know the number of computerized buyers participating in your auction for each round. Each of these buyers will have a maximum willingness to pay for your product. The maximum willingness to pay is an integer between 0 and 100.
+
+In each auction, bids ascend until all buyers reach their maximum willingness to pay. Some buyers will be forced to stop bidding as their limits are reached. The auction ends when one buyer remains. The amount where each buyer stops bidding in the auction is called the Drop-Out Price.
+
+The buyer with the highest Drop-Out Price wins so long as that amount is equal to or above your Reservation Price. If all of the Drop-Out Prices are below your Reservation Price, your product will not be sold, and you will earn zero in that round. The profit calculation is as follows:
+
+Your Profit = Second Highest Drop-Out Price if the second highest Drop-Out Price is equal to or above your Reservation Price.
+Your Profit = Reservation Price if the highest Drop-Out Price is above the Reservation Price, but the second highest Drop-Out Price is below the Reservation Price.
+Your Profit = 0 if all the Drop-Out Prices are below the Reservation Price.
+Each auction round, you will have one unit of the product to sell, regardless of whether or not you sold it in the previous round. You will participate in 60 consecutive auctions.
+
+For each round, the number of buyers is randomly drawn as 1, 4, 7, or 10, each number being equally likely. The maximum amount a buyer is willing to pay is a whole number from 0 to 100 (see the table and graph at the end of these instructions for an example). Your product will remain the same throughout all rounds.
+
+Examples
+Example 1
+If you enter a Reservation Price of 60, and the second highest Drop-Out Price is 75, you earn a profit of 75 in this round.
+
+Example 2
+If you enter a Reservation Price of 40, and the second highest Drop-Out Price is 30, but the highest Drop-Out Price is 60, you earn a profit of 40 in this round.
+
+Example 3
+If you enter a Reservation Price of 60, and the highest willingness to pay is 55, then none of the buyers have a Drop-Out Price equal to or higher than 60. No bids will be entered, and you earn a profit of 0 in this round.
+
+The mechanics of entering a Reservation Price
+Once you output a Reservation Price, the auction will proceed.
+
+Information you will see at the end of each round
+After each round you will be shown the results. We will show what the Drop-Out Prices were for each buyer or whether the buyer was unable to bid because his maximum willingness to pay was below the Reservation Price.
+You will also see the following information:
+- The Period, the Reservation Price, the Number of Buyers
+- The Winning Bid, and Your Profit for the round
+
+You will also see this information for all previous rounds.
+
+Here is a table showing the bidding distribution, with a sample of 100 rounds of drop-out prices. The values in the table are integers between 0 and 100, distributed across 10 rows and 10 columns:
+
+Row 1: 4, 32, 0, 16, 67, 47, 0, 12, 0, 0
+Row 2: 1, 5, 39, 0, 21, 81, 5, 0, 7, 1
+Row 3: 2, 1, 1, 7, 3, 4, 1, 84, 8, 58
+Row 4: 2, 0, 62, 2, 1, 0, 68, 20, 92, 8
+Row 5: 5, 0, 4, 0, 16, 43, 1, 50, 2, 0
+Row 6: 43, 7, 39, 7, 6, 0, 23, 25, 14, 12
+Row 7: 71, 0, 17, 44, 15, 15, 3, 0, 84, 54
+Row 8: 1, 91, 11, 60, 1, 36, 91, 30, 3, 0
+Row 9: 1, 1, 0, 15, 0, 57, 3, 9, 93, 5
+Row 10: 10, 2, 18, 71, 0, 12, 79, 64, 19, 10
+
+Here is a column chart titled "Drop-Out-Price Sample Distribution." It represents the distribution of drop-out prices across 10,000 rounds.
+The x-axis is labeled "Drop-Out-Price" and consists of 10 price ranges. The y-axis is labeled "Frequency" and represents the percentage of rounds that fall into each price range. 
+The first bar, representing 0 to 10, is the tallest, reaching approximately 45% of the total rounds. The next bar, 11 to 20, is significantly shorter, around 15%. The following bars continue to decrease in height as the price range increases. The bars for 21 to 30, 31 to 40, and 41 to 50 are between 5% and 10%, while the bars for 51 to 60 and higher ranges are much shorter, each below 5%. The final bar, 91 to 100, is the shortest, indicating the lowest frequency.
+Below the graph, three numerical values are displayed:
+Average: 25
+Min: 0
+Max: 100
+
+
