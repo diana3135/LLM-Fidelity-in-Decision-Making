@@ -10,9 +10,9 @@ import random
 from tqdm import tqdm
 
 # Data loading
-human_experiment_data = pd.read_csv('../../human_experiment/auction_human_data.csv')
+human_experiment_data = pd.read_csv('../../../human_experiment/auction_human_data.csv')
 agent_experiment_data = human_experiment_data.copy()
-umich_profiles = pd.read_excel("../profile_generation/umich_undergraduate_profiles.xlsx")
+umich_profiles = pd.read_excel("../../profile_generation/umich_undergraduate_profiles.xlsx")
 instructions_file_path = "experiment_instructions.txt"
 
 def load_experiment_instructions(file_path):
@@ -20,6 +20,32 @@ def load_experiment_instructions(file_path):
         return f.read()
 
 experiment_instructions = load_experiment_instructions(instructions_file_path)
+
+# Static instructions for instruction-based experiments
+STATIC_INSTRUCTIONS_INSTRUCTION = f"""
+You are about to participate in an auction experiment.
+
+Here are the experiment instructions:
+{experiment_instructions}
+
+IMPORTANT:
+- Try to **maximize your total profit** over 60 rounds.
+- You can only respond with an integer between 0 and 100 representing the reservation price.
+- Do not provide any explanation or additional text in your response.
+"""
+
+# Static instructions for imitation experiments
+STATIC_INSTRUCTIONS_IMITATION = f"""
+You are about to participate in an auction experiment.
+
+Here are the experiment instructions:
+{experiment_instructions}
+
+IMPORTANT:
+- Your task is to analyze human decision patterns and predict future reservation prices.
+- You will provide multiple reservation prices for different rounds.
+- Each reservation price should be an integer between 0 and 100.
+"""
 
 # Helper Functions
 def extract_bid_prices(bid_string: str) -> List[int]:
@@ -50,14 +76,19 @@ class ClaudeChatWrapper:
         self.model = model
         self.temperature = temperature
 
-    def invoke(self, system_prompt: str, user_prompt: str, temperature: float = 1.0):
+    def invoke(self, system_prompt: str, user_prompt: str, temperature: float = 1.0, identity_prompt: str = None):
         try:
+            messages = []
+            if identity_prompt:
+                messages.append({"role": "user", "content": identity_prompt})
+            messages.append({"role": "user", "content": user_prompt})
+            
             response = self.client.messages.create(
                 model=self.model,
                 max_tokens=10,
                 temperature=temperature,
                 system=system_prompt,
-                messages=[{"role": "user", "content": user_prompt}]
+                messages=messages
             )
 
             if isinstance(response.content, list):
@@ -79,17 +110,20 @@ class ClaudeChatWrapper:
 
 class OpenAIChatWrapper:
     def __init__(self, model="gpt-4o", openai_api_key=None):
-        openai.api_key = openai_api_key or os.getenv("OPENAI_API_KEY")
+        self.api_key = openai_api_key or os.getenv("OPENAI_API_KEY")
+        self.client = openai.OpenAI(api_key=self.api_key)
         self.model = model
 
-    def invoke(self, system_prompt: str, user_prompt: str, temperature: float = 1.0):
+    def invoke(self, system_prompt: str, user_prompt: str, temperature: float = 1.0, identity_prompt: str = None):
         try:
-            response = openai.chat.completions.create(
+            messages = [{"role": "system", "content": system_prompt}]
+            if identity_prompt:
+                messages.append({"role": "user", "content": identity_prompt})
+            messages.append({"role": "user", "content": user_prompt})
+            
+            response = self.client.chat.completions.create(
                 model=self.model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
+                messages=messages,
                 temperature=temperature
             )
             
@@ -145,7 +179,10 @@ class AuctionExperiment:
         else:
             raise ValueError(f"Unsupported LLM type: {llm_type}")
         
-        # system prompt
+        # Static system prompt
+        self.system_prompt = STATIC_INSTRUCTIONS_INSTRUCTION
+        
+        # Dynamic identity prompt (sent as user message)
         base_identity = f"You are an undergraduate student at the University of Michigan.\nYou are {self.state.age}, {self.state.gender}, {self.state.race}, and studying {self.state.program}."
         
         risk_text = ""
@@ -154,20 +191,10 @@ class AuctionExperiment:
         elif risk_preference == "seeking":
             risk_text = "You are a risk-seeking decision maker, prioritizing higher-risk reservation prices for the potential of higher profit."
         
-        self.system_prompt = f"""
-            {base_identity}
-            {risk_text}
-
-            You are about to participate in an experiment in the economics of decision making.
-
-            Here are the experiment instructions:
-            {self.state.experiment_instructions}
-
-            IMPORTANT:
-            - Try to **maximize your total profit** over 60 rounds.
-            - You can only respond with an integer between 0 and 100 representing the reservation price.
-            - Do not provide any explanation or additional text in your response.
-        """
+        self.identity_prompt = f"""
+{base_identity}
+{risk_text}
+"""
 
         self.user_prompt_template = """
             Here is your last round result:
@@ -248,14 +275,19 @@ class AuctionExperiment:
                 llm_output = self.llm.invoke(
                     system_prompt=self.system_prompt,
                     user_prompt=user_prompt,
-                    temperature=1.0
+                    temperature=1.0,
+                    identity_prompt=self.identity_prompt
                 ).content.strip()
                 
                 
                 if re.fullmatch(r'\d+', llm_output):
-                    return int(llm_output)
+                    reserve_price = int(llm_output)
+                    if 0 <= reserve_price <= 100:
+                        return reserve_price
+                    else:
+                        print(f"Reserve price out of range (0-100) on attempt {attempt + 1}: {reserve_price}")
                 else:
-                    print(f"Invalid response on attempt {attempt + 1}: {llm_output}")
+                    print(f"Invalid response format on attempt {attempt + 1}: {llm_output}")
             except Exception as e:
                 print(f"API call failed on attempt {attempt + 1}: {e}")
         
@@ -479,12 +511,10 @@ class ImitationExperiment:
 2. For rounds {self.context_num + 1} to 60, continue their strategy by predicting reserve prices that match their decision patterns.
 """
         
-        # Create prompts
-        system_prompt = f"""
-You are an AI agent participating in a simulated auction experiment.
-
-{self.experiment_instructions}
-
+        # Create prompts using static instructions for imitation
+        system_prompt = STATIC_INSTRUCTIONS_IMITATION
+        
+        task_prompt = f"""
 ## Task:
 {task}
 
@@ -498,6 +528,8 @@ round 60: [reserve_price]
 """
         
         user_prompt = f"""
+{task_prompt}
+
 ## Participant's Auction Results (Rounds 1-{self.context_num}):
 {auction_results_text}
 
