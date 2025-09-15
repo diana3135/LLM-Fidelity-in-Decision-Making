@@ -2,16 +2,6 @@
 
 This script (`generation_execution.py`) consolidates all the auction experiment functionality. It supports both Claude and GPT models with various configurations for both instruction-based and imitation experiments.
 
-## Features
-
-- **Unified LLM Support**: Both Claude and GPT models
-- **Multiple Experiment Types**: Instruction-based and imitation experiments
-- **Configurable Risk Preferences**: Risk-averse, risk-seeking, or neutral (instruction only)
-- **Imitation Modes**: Direct, shuffle, reverse, mask, and regionshuffle
-- **Flexible Model Selection**: Choose specific model versions
-- **Threading Support**: Parallel execution for faster results (instruction only)
-- **Command-line Interface**: Parameter configuration
-
 ## Prerequisites
 
 1. **API Keys**: Set up API keys in environment variables:

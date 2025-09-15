@@ -145,7 +145,7 @@ class AuctionExperiment:
         else:
             raise ValueError(f"Unsupported LLM type: {llm_type}")
         
-        # Build system prompt
+        # system prompt
         base_identity = f"You are an undergraduate student at the University of Michigan.\nYou are {self.state.age}, {self.state.gender}, {self.state.race}, and studying {self.state.program}."
         
         risk_text = ""
